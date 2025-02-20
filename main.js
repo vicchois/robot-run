@@ -26,6 +26,7 @@ const groundSegments = [];
 const numSegments = 5;
 const segmentLength = 50;
 const groundWidth = 10;
+const xBoundary = groundWidth / 2 - 0.5;
 
 const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
 
@@ -84,7 +85,7 @@ function createSkyObstacle() {
     const randomX = (Math.random() - 0.5) * (groundWidth - 2);
     
     // Random height (floating)
-    const randomY = Math.random() * 2 + 3; // Between 3 and 5 units high
+    const randomY = 2; // Between 3 and 5 units high
     
     // Obstacles are spaced along the z-axis ahead
     const randomZ = Math.random() * numSegments * segmentLength + 20;
@@ -124,7 +125,25 @@ window.addEventListener('keyup', (event) => {
     }
 });
 
-const xBoundary = groundWidth / 2 - 0.5;
+function checkCollision() {
+    obstacles.forEach(obstacle => {
+        const distance = runner.position.distanceTo(obstacle.position);
+        if (distance < 1.2) { 
+            handleCollision();
+        }
+    });
+
+    skyObstacles.forEach(skyObstacle => {
+        const distance = runner.position.distanceTo(skyObstacle.position);
+        if (distance < 1.2 && runner.position.y > 1.5) { 
+            handleCollision();
+        }
+    });
+}
+
+function handleCollision() {
+    speed = 0; // Stop movement
+}
 
 function animate() {
     requestAnimationFrame(animate);
@@ -168,9 +187,11 @@ function animate() {
         if (skyObstacle.position.z > runner.position.z + 10) {
             skyObstacle.position.z -= numSegments * segmentLength;
             skyObstacle.position.x = (Math.random() - 0.5) * (groundWidth - 2);
-            skyObstacle.position.y = Math.random() * 2 + 3;
+            skyObstacle.position.y = 1;
         }
     });
+
+    checkCollision(); 
 
     renderer.render(scene, camera);
 }
