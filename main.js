@@ -23,6 +23,8 @@ directionalLight.position.set(5, 10, 5);
 scene.add(directionalLight);
 
 const groundSegments = [];
+const leftWallSegments = [];
+const rightWallSegments = [];
 const numSegments = 5;
 const segmentLength = 50;
 const groundWidth = 10;
@@ -47,6 +49,27 @@ function createGround() {
 
 createGround()
 
+function createWalls() {
+    const wallHeight = 5;
+    const wallThickness = 0.5;
+    const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x505050 });
+    
+    for (let i = 0; i < numSegments; i++) {
+        const leftWallGeometry = new THREE.BoxGeometry(wallThickness, wallHeight, segmentLength);
+        const leftWall = new THREE.Mesh(leftWallGeometry, wallMaterial);
+        leftWall.position.set(-groundWidth / 2, wallHeight / 2, -i * segmentLength);
+        scene.add(leftWall);
+        leftWallSegments.push(leftWall);
+        
+        const rightWallGeometry = new THREE.BoxGeometry(wallThickness, wallHeight, segmentLength);
+        const rightWall = new THREE.Mesh(rightWallGeometry, wallMaterial);
+        rightWall.position.set(groundWidth / 2, wallHeight / 2, -i * segmentLength);
+        scene.add(rightWall);
+        rightWallSegments.push(rightWall);
+    }
+}
+
+createWalls()
 
 
 function createRobotRunner() {
@@ -104,12 +127,12 @@ const horizontalSpeed = 0.15;
 let isJumping = false;
 let velocityY = 0;
 const gravity = 0.01;
-const jumpStrength = 0.3;
+const jumpStrength = 0.25;
 
 // obstacles
 const obstacles = [];
 const skyObstacles = [];
-const numObstacles = 10;
+const numObstacles = 20;
 
 function createGroundObstacle() {
     const obstacleGeometry = new THREE.BoxGeometry(2, 1.5, 2);
@@ -247,6 +270,20 @@ function animate() {
 
     // ground
     groundSegments.forEach(segment => {
+        if (segment.position.z > camera.position.z + segmentLength) {
+            segment.position.z -= numSegments * segmentLength;
+        }
+    });
+
+    // left walls
+    leftWallSegments.forEach(segment => {
+        if (segment.position.z > camera.position.z + segmentLength) {
+            segment.position.z -= numSegments * segmentLength;
+        }
+    });
+
+    // left walls
+    rightWallSegments.forEach(segment => {
         if (segment.position.z > camera.position.z + segmentLength) {
             segment.position.z -= numSegments * segmentLength;
         }
