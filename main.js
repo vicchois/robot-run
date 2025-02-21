@@ -39,10 +39,50 @@ for (let i = 0; i < numSegments; i++) {
     groundSegments.push(ground);
 }
 
-const runnerGeometry = new THREE.BoxGeometry(1, 2, 1);
-const runnerMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-const runner = new THREE.Mesh(runnerGeometry, runnerMaterial);
-runner.position.set(0, 1, 0);
+
+function createRobotRunner() {
+    // body
+    const bodyGeometry = new THREE.BoxGeometry(1, 2, 0.5); 
+    const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0xFF0000 }); 
+    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+    
+    // head
+    const headGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const headMaterial = new THREE.MeshStandardMaterial({ color: 0xFF0000 }); 
+    const head = new THREE.Mesh(headGeometry, headMaterial);
+    head.position.set(0, 1.5, 0); 
+
+    // arms
+    const armGeometry = new THREE.CylinderGeometry(0.15, 0.15, 1); 
+    const armMaterial = new THREE.MeshStandardMaterial({ color: 0xFF0000 });
+    const leftArm = new THREE.Mesh(armGeometry, armMaterial);
+    const rightArm = new THREE.Mesh(armGeometry, armMaterial);
+    
+    leftArm.position.set(-0.6, 0.5, 0); 
+    rightArm.position.set(0.6, 0.5, 0); 
+    
+    // legs
+    const legGeometry = new THREE.CylinderGeometry(0.2, 0.2, 1);
+    const legMaterial = new THREE.MeshStandardMaterial({ color: 0xFF0000 });
+    const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
+    const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
+    
+    leftLeg.position.set(-0.3, -0.75, 0); 
+    rightLeg.position.set(0.3, -0.75, 0); 
+    
+    // group robot
+    const robot = new THREE.Group();
+    robot.add(body);
+    robot.add(head);
+    robot.add(leftArm);
+    robot.add(rightArm);
+    robot.add(leftLeg);
+    robot.add(rightLeg);
+    
+    return robot;
+}
+const runner = createRobotRunner();
+runner.position.set(0, 2.1, 0);
 scene.add(runner);
 
 let speed = 0.2;
@@ -55,20 +95,17 @@ let velocityY = 0;
 const gravity = 0.01;
 const jumpStrength = 0.3;
 
-// Obstacles
+// obstacles
 const obstacles = [];
 const skyObstacles = [];
 const numObstacles = 5;
 
 function createGroundObstacle() {
-    const obstacleGeometry = new THREE.BoxGeometry(1, 1.5, 1);
+    const obstacleGeometry = new THREE.BoxGeometry(2, 1.5, 2);
     const obstacleMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
     const obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
     
-    // Random x position within road width (-4 to 4)
     const randomX = (Math.random() - 0.5) * (groundWidth - 2);
-    
-    // Obstacles are spaced along the z-axis ahead
     const randomZ = Math.random() * numSegments * segmentLength + 20;
     
     obstacle.position.set(randomX, 0.75, -randomZ);
@@ -77,17 +114,12 @@ function createGroundObstacle() {
 }
 
 function createSkyObstacle() {
-    const skyGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const skyGeometry = new THREE.SphereGeometry(1, 32, 32);
     const skyMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 }); // Yellow for visibility
     const skyObstacle = new THREE.Mesh(skyGeometry, skyMaterial);
     
-    // Random x position within road width (-4 to 4)
     const randomX = (Math.random() - 0.5) * (groundWidth - 2);
-    
-    // Random height (floating)
-    const randomY = 2; // Between 3 and 5 units high
-    
-    // Obstacles are spaced along the z-axis ahead
+    const randomY = 2; 
     const randomZ = Math.random() * numSegments * segmentLength + 20;
     
     skyObstacle.position.set(randomX, randomY, -randomZ);
@@ -95,7 +127,6 @@ function createSkyObstacle() {
     skyObstacles.push(skyObstacle);
 }
 
-// Generate obstacles ahead
 for (let i = 0; i < numObstacles; i++) {
     createGroundObstacle();
     createSkyObstacle();
@@ -142,7 +173,7 @@ function checkCollision() {
 }
 
 function handleCollision() {
-    speed = 0; // Stop movement
+    speed = 0; 
 }
 
 function animate() {
@@ -156,7 +187,6 @@ function animate() {
     runner.position.x = Math.max(-xBoundary, Math.min(xBoundary, runner.position.x));
     camera.position.z = runner.position.z + 10;
 
-    // Apply jump physics
     if (isJumping) {
         runner.position.y += velocityY;
         velocityY -= gravity;
