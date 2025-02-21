@@ -132,7 +132,7 @@ const jumpStrength = 0.25;
 // obstacles
 const obstacles = [];
 const skyObstacles = [];
-const numObstacles = 20;
+const numObstacles = 15;
 
 function createGroundObstacle() {
     const obstacleGeometry = new THREE.BoxGeometry(2, 1.5, 2);
@@ -148,7 +148,7 @@ function createGroundObstacle() {
 }
 
 function createSkyObstacle() {
-    const skyGeometry = new THREE.SphereGeometry(1, 32, 32);
+    const skyGeometry = new THREE.SphereGeometry(0.9, 32, 32);
     const skyMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 }); // Yellow for visibility
     const skyObstacle = new THREE.Mesh(skyGeometry, skyMaterial);
     
@@ -245,6 +245,7 @@ function resetObstacles() {
     // Recreate obstacles from scratch
     createAllObstacles();
     createGround();
+    createWalls();
 }
 
 function animate() {
