@@ -119,7 +119,7 @@ function createSkyObstacle() {
     const skyObstacle = new THREE.Mesh(skyGeometry, skyMaterial);
     
     const randomX = (Math.random() - 0.5) * (groundWidth - 2);
-    const randomY = 2; 
+    const randomY = 3; 
     const randomZ = Math.random() * numSegments * segmentLength + 20;
     
     skyObstacle.position.set(randomX, randomY, -randomZ);
@@ -166,7 +166,7 @@ function checkCollision() {
 
     skyObstacles.forEach(skyObstacle => {
         const distance = runner.position.distanceTo(skyObstacle.position);
-        if (distance < 1.2 && runner.position.y >= 1) { 
+        if (distance < 2.5 && runner.position.y >= 1) { 
             handleCollision();
         }
     });
@@ -217,7 +217,7 @@ function animate() {
         if (skyObstacle.position.z > runner.position.z + 10) {
             skyObstacle.position.z -= numSegments * segmentLength;
             skyObstacle.position.x = (Math.random() - 0.5) * (groundWidth - 2);
-            skyObstacle.position.y = 1;
+            skyObstacle.position.y = 3;
         }
     });
 
