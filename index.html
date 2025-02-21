@@ -5,9 +5,40 @@
 		<title>Assignment3</title>
 		<style>
 			body { margin: 0; }
+			.popup {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background-color: red;
+				display: none;
+				justify-content: center;
+				align-items: center;
+			}
+			.popup-content {
+				text-align: center;
+				background-color: white;
+				padding: 30px;
+				border-radius: 10px;
+			}
+
+			button {
+				padding: 10px 20px;
+				margin-top: 20px;
+				font-size: 16px;
+				cursor: pointer;
+			}
+
 		</style>
 	</head>
 	<body>
+		<div id="game-over-popup" class="popup">
+			<div class="popup-content">
+				<h2>You Died</h2>
+				<button id="restart-button">Restart</button>
+			</div>
+		</div>
 		<script type="module" src="/main.js"></script>
 	</body>
 </html>

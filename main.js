@@ -30,31 +30,40 @@ const xBoundary = groundWidth / 2 - 1;
 
 const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
 
-for (let i = 0; i < numSegments; i++) {
-    const groundGeometry = new THREE.PlaneGeometry(groundWidth, segmentLength);
-    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.set(0, 0, -i * segmentLength);
-    scene.add(ground);
-    groundSegments.push(ground);
+const textureLoader = new THREE.TextureLoader();
+const robotTexture = textureLoader.load('textures/metal.jpg')
+const containerTexture = textureLoader.load('textures/containerside.png')
+
+function createGround() {
+    for (let i = 0; i < numSegments; i++) {
+        const groundGeometry = new THREE.PlaneGeometry(groundWidth, segmentLength);
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.set(0, 0, -i * segmentLength);
+        scene.add(ground);
+        groundSegments.push(ground);
+    }
 }
+
+createGround()
+
 
 
 function createRobotRunner() {
     // body
     const bodyGeometry = new THREE.BoxGeometry(1, 2, 0.5); 
-    const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0xD3D3D3 }); 
+    const bodyMaterial = new THREE.MeshStandardMaterial({ map: robotTexture }); 
     const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
     
     // head
     const headGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const headMaterial = new THREE.MeshStandardMaterial({ color: 0xD3D3D3 }); 
+    const headMaterial = new THREE.MeshStandardMaterial({ map: robotTexture }); 
     const head = new THREE.Mesh(headGeometry, headMaterial);
     head.position.set(0, 1.5, 0); 
 
     // arms
     const armGeometry = new THREE.CylinderGeometry(0.15, 0.15, 1); 
-    const armMaterial = new THREE.MeshStandardMaterial({ color: 0xD3D3D3 });
+    const armMaterial = new THREE.MeshStandardMaterial({ map: robotTexture });
     const leftArm = new THREE.Mesh(armGeometry, armMaterial);
     const rightArm = new THREE.Mesh(armGeometry, armMaterial);
     
@@ -63,7 +72,7 @@ function createRobotRunner() {
     
     // legs
     const legGeometry = new THREE.CylinderGeometry(0.2, 0.2, 1);
-    const legMaterial = new THREE.MeshStandardMaterial({ color: 0xD3D3D3 });
+    const legMaterial = new THREE.MeshStandardMaterial({ map: robotTexture });
     const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
     const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
     
@@ -88,6 +97,8 @@ scene.add(runner);
 let speed = 0.2;
 let moveLeft = false;
 let moveRight = false;
+let canMove = true;
+
 const horizontalSpeed = 0.15;
 
 let isJumping = false;
@@ -102,7 +113,7 @@ const numObstacles = 10;
 
 function createGroundObstacle() {
     const obstacleGeometry = new THREE.BoxGeometry(2, 1.5, 2);
-    const obstacleMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
+    const obstacleMaterial = new THREE.MeshStandardMaterial({ map: containerTexture });
     const obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
     
     const randomX = (Math.random() - 0.5) * (groundWidth - 2);
@@ -127,10 +138,15 @@ function createSkyObstacle() {
     skyObstacles.push(skyObstacle);
 }
 
-for (let i = 0; i < numObstacles; i++) {
-    createGroundObstacle();
-    createSkyObstacle();
+function createAllObstacles() {
+    for (let i = 0; i < numObstacles; i++) {
+        createGroundObstacle();
+        createSkyObstacle();
+    }
 }
+
+createAllObstacles()
+
 
 window.addEventListener('keydown', (event) => {
     if (event.key === 'a' || event.key === 'A') moveLeft = true;
@@ -174,6 +190,38 @@ function checkCollision() {
 
 function handleCollision() {
     speed = 0; 
+    canMove = false;
+    document.getElementById('game-over-popup').style.display = 'flex';
+}
+
+document.getElementById('restart-button').addEventListener('click', () => {
+    //rest from beginning
+    speed = 0.2;
+    canMove = true;
+    runner.position.set(0, 1.15, 0);
+    camera.position.set(0, 6, 10);
+    //hide popup
+    document.getElementById('game-over-popup').style.display = 'none';
+    //reset obstacles
+    resetObstacles();
+});
+
+function resetObstacles() {
+    //remove all obstacles
+    obstacles.forEach(obstacle => {
+        scene.remove(obstacle);
+    });
+    skyObstacles.forEach(skyObstacle => {
+        scene.remove(skyObstacle);
+    });
+
+    //clear
+    obstacles.length = 0;
+    skyObstacles.length = 0;
+
+    // Recreate obstacles from scratch
+    createAllObstacles();
+    createGround();
 }
 
 function animate() {
@@ -181,8 +229,8 @@ function animate() {
 
     runner.position.z -= speed;
     
-    if (moveLeft) runner.position.x -= horizontalSpeed;
-    if (moveRight) runner.position.x += horizontalSpeed;
+    if (moveLeft && canMove) runner.position.x -= horizontalSpeed;
+    if (moveRight && canMove) runner.position.x += horizontalSpeed;
 
     runner.position.x = Math.max(-xBoundary, Math.min(xBoundary, runner.position.x));
     camera.position.z = runner.position.z + 10;
