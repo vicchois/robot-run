@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 5, 10);
+camera.position.set(0, 6, 10);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -26,7 +26,7 @@ const groundSegments = [];
 const numSegments = 5;
 const segmentLength = 50;
 const groundWidth = 10;
-const xBoundary = groundWidth / 2 - 0.5;
+const xBoundary = groundWidth / 2 - 1;
 
 const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
 
@@ -43,18 +43,18 @@ for (let i = 0; i < numSegments; i++) {
 function createRobotRunner() {
     // body
     const bodyGeometry = new THREE.BoxGeometry(1, 2, 0.5); 
-    const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0xFF0000 }); 
+    const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0xD3D3D3 }); 
     const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
     
     // head
     const headGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const headMaterial = new THREE.MeshStandardMaterial({ color: 0xFF0000 }); 
+    const headMaterial = new THREE.MeshStandardMaterial({ color: 0xD3D3D3 }); 
     const head = new THREE.Mesh(headGeometry, headMaterial);
     head.position.set(0, 1.5, 0); 
 
     // arms
     const armGeometry = new THREE.CylinderGeometry(0.15, 0.15, 1); 
-    const armMaterial = new THREE.MeshStandardMaterial({ color: 0xFF0000 });
+    const armMaterial = new THREE.MeshStandardMaterial({ color: 0xD3D3D3 });
     const leftArm = new THREE.Mesh(armGeometry, armMaterial);
     const rightArm = new THREE.Mesh(armGeometry, armMaterial);
     
@@ -63,7 +63,7 @@ function createRobotRunner() {
     
     // legs
     const legGeometry = new THREE.CylinderGeometry(0.2, 0.2, 1);
-    const legMaterial = new THREE.MeshStandardMaterial({ color: 0xFF0000 });
+    const legMaterial = new THREE.MeshStandardMaterial({ color: 0xD3D3D3 });
     const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
     const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
     
@@ -82,7 +82,7 @@ function createRobotRunner() {
     return robot;
 }
 const runner = createRobotRunner();
-runner.position.set(0, 2.1, 0);
+runner.position.set(0, 1.15, 0);
 scene.add(runner);
 
 let speed = 0.2;
@@ -98,7 +98,7 @@ const jumpStrength = 0.3;
 // obstacles
 const obstacles = [];
 const skyObstacles = [];
-const numObstacles = 5;
+const numObstacles = 10;
 
 function createGroundObstacle() {
     const obstacleGeometry = new THREE.BoxGeometry(2, 1.5, 2);
@@ -119,7 +119,7 @@ function createSkyObstacle() {
     const skyObstacle = new THREE.Mesh(skyGeometry, skyMaterial);
     
     const randomX = (Math.random() - 0.5) * (groundWidth - 2);
-    const randomY = 3; 
+    const randomY = 3.15; 
     const randomZ = Math.random() * numSegments * segmentLength + 20;
     
     skyObstacle.position.set(randomX, randomY, -randomZ);
@@ -143,7 +143,7 @@ window.addEventListener('keydown', (event) => {
     }
     if (event.key === 's' || event.key === 'S') {
         runner.scale.y = 0.5;
-        runner.position.y = 0.75;
+        runner.position.y = 0.75;  
     }
 });
 
@@ -152,21 +152,21 @@ window.addEventListener('keyup', (event) => {
     if (event.key === 'd' || event.key === 'D') moveRight = false;
     if (event.key === 's' || event.key === 'S') {
         runner.scale.y = 1;
-        runner.position.y = 1;
+        runner.position.y = 1.15;
     }
 });
 
 function checkCollision() {
     obstacles.forEach(obstacle => {
         const distance = runner.position.distanceTo(obstacle.position);
-        if (distance < 1.2) { 
+        if (distance < 2) { 
             handleCollision();
         }
     });
 
     skyObstacles.forEach(skyObstacle => {
         const distance = runner.position.distanceTo(skyObstacle.position);
-        if (distance < 2.5 && runner.position.y >= 1) { 
+        if ((distance < 2.1) && runner.position.y >= 1.15) { 
             handleCollision();
         }
     });
@@ -190,8 +190,8 @@ function animate() {
     if (isJumping) {
         runner.position.y += velocityY;
         velocityY -= gravity;
-        if (runner.position.y <= 1) {
-            runner.position.y = 1;
+        if (runner.position.y <= 1.15) {
+            runner.position.y = 1.15;
             isJumping = false;
             velocityY = 0;
         }
@@ -217,7 +217,7 @@ function animate() {
         if (skyObstacle.position.z > runner.position.z + 10) {
             skyObstacle.position.z -= numSegments * segmentLength;
             skyObstacle.position.x = (Math.random() - 0.5) * (groundWidth - 2);
-            skyObstacle.position.y = 3;
+            skyObstacle.position.y = 3.15;
         }
     });
 
