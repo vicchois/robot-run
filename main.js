@@ -135,7 +135,7 @@ function checkCollision() {
 
     skyObstacles.forEach(skyObstacle => {
         const distance = runner.position.distanceTo(skyObstacle.position);
-        if (distance < 1.2 && runner.position.y > 1.5) { 
+        if (distance < 1.2 && runner.position.y >= 1) { 
             handleCollision();
         }
     });
