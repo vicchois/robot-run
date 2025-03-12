@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xadd8e6);
+scene.background = new THREE.Color(0x000000);
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, 6, 10);
 
@@ -16,12 +16,12 @@ controls.dampingFactor = 0.05;
 controls.screenSpacePanning = false;
 controls.maxPolarAngle = Math.PI / 2;
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-directionalLight.position.set(5, 10, 5);
-scene.add(directionalLight);
+// const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+// directionalLight.position.set(5, 10, 5);
+// scene.add(directionalLight);
 
 const groundSegments = [];
 const leftWallSegments = [];
@@ -31,7 +31,7 @@ const segmentLength = 50;
 const groundWidth = 10;
 const xBoundary = groundWidth / 2 - 1;
 
-const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
+const groundMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
 
 const textureLoader = new THREE.TextureLoader();
 const robotTexture = textureLoader.load('textures/metal.jpg')
@@ -51,7 +51,7 @@ function createGround() {
 createGround()
 
 function createWalls() {
-    const wallHeight = 5;
+    const wallHeight = 10;
     const wallThickness = 0.5;
     const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x505050 });
     
@@ -133,6 +133,7 @@ const jumpStrength = 0.25;
 // obstacles
 const obstacles = [];
 const skyObstacles = [];
+const skyLights = [];
 const numObstacles = 15;
 
 function createGroundObstacle() {
@@ -150,16 +151,30 @@ function createGroundObstacle() {
 
 function createSkyObstacle() {
     const skyGeometry = new THREE.SphereGeometry(0.9, 32, 32);
-    const skyMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 }); // Yellow for visibility
+    const skyMaterial = new THREE.MeshStandardMaterial({
+        emissive: 0xffffaa,
+        emissiveIntensity: 0.1, 
+        color: 0xffff00,  // yellow for visibility
+        transparent: true, // glass-like transparency
+        opacity: 0.8,
+    });
     const skyObstacle = new THREE.Mesh(skyGeometry, skyMaterial);
     
-    const randomX = (Math.random() - 0.5) * (groundWidth - 2);
+    const randomX = (Math.random() - 0.5) * (groundWidth - 2.5);
     const randomY = 3.15; 
     const randomZ = Math.random() * numSegments * segmentLength + 20;
     
     skyObstacle.position.set(randomX, randomY, -randomZ);
+
+    // add lamp light
+    const light = new THREE.PointLight(0xffcc88, 10, 0);
+    light.position.set(randomX, randomY, -randomZ);
+    light.castShadow = true;
+
+    scene.add(light);
     scene.add(skyObstacle);
-    skyObstacles.push(skyObstacle);
+    skyObstacles.push([skyObstacle, light]);
+
 }
 
 function createAllObstacles() {
@@ -205,7 +220,8 @@ function checkCollision() {
         }
     });
 
-    skyObstacles.forEach(skyObstacle => {
+    skyObstacles.forEach(skyObstacleTuple => {
+        let [skyObstacle, _] = skyObstacleTuple;
         const distance = runner.position.distanceTo(skyObstacle.position);
         if ((distance < 2.1) && runner.position.y >= 1.15) { 
             handleCollision();
@@ -243,8 +259,10 @@ function resetObstacles() {
     obstacles.forEach(obstacle => {
         scene.remove(obstacle);
     });
-    skyObstacles.forEach(skyObstacle => {
+    skyObstacles.forEach(skyObstacleTuple => {
+        let [skyObstacle, light] = skyObstacleTuple;
         scene.remove(skyObstacle);
+        scene.remove(light);
     });
 
     //clear
@@ -338,11 +356,15 @@ function animate() {
     });
 
     // sky obstacles
-    skyObstacles.forEach(skyObstacle => {
+    skyObstacles.forEach(skyObstacleTuple => {
+        let [skyObstacle, light] = skyObstacleTuple;
         if (skyObstacle.position.z > runner.position.z + 10) {
             skyObstacle.position.z -= numSegments * segmentLength;
+            light.position.z = skyObstacle.position.z;
             skyObstacle.position.x = (Math.random() - 0.5) * (groundWidth - 2);
+            light.position.x = skyObstacle.position.x;
             skyObstacle.position.y = 3.15;
+            light.position.y = 2.15;
         }
     });
 
