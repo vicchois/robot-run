@@ -123,7 +123,7 @@ let moveLeft = false;
 let moveRight = false;
 let canMove = true;
 
-const horizontalSpeed = 0.15;
+let horizontalSpeed = 0.15;
 
 let isJumping = false;
 let velocityY = 0;
@@ -182,8 +182,9 @@ window.addEventListener('keydown', (event) => {
         }
     }
     if (event.key === 's' || event.key === 'S') {
-        runner.scale.y = 0.5;
-        runner.position.y = 0.75;  
+        isJumping = false;
+        runner.position.y = 0.75;
+        runner.scale.y = 0.5;  
     }
 });
 
@@ -215,15 +216,22 @@ function checkCollision() {
 function handleCollision() {
     speed = 0; 
     canMove = false;
+    stopGame();
     document.getElementById('game-over-popup').style.display = 'flex';
 }
 
 document.getElementById('restart-button').addEventListener('click', () => {
     //rest from beginning
     speed = 0.2;
+    horizontalSpeed = 0.15;
     canMove = true;
     runner.position.set(0, 1.15, 0);
     camera.position.set(0, 6, 10);
+
+    //reset score
+    score = 0;
+    document.getElementById("game-score").textContent = score;
+    document.getElementById("high-score").textContent = highScore;
     //hide popup
     document.getElementById('game-over-popup').style.display = 'none';
     //reset obstacles
@@ -247,12 +255,42 @@ function resetObstacles() {
     createAllObstacles();
     createGround();
     createWalls();
+    startGame();
+}
+
+let score = 0;
+let highScore = 0;
+let intervalId = null;
+
+function updateScore() {
+    score++;
+    document.getElementById("game-score").textContent = score;
+}
+
+function startGame() {
+    if (!intervalId) {
+        intervalId = setInterval(updateScore, 50); // 0.05 sec
+    }
+}
+
+function stopGame() {
+    clearInterval(intervalId);
+    intervalId = null; // reset
+    document.getElementById("popup-game-score").textContent = score;
+    if (score > highScore) {
+        highScore = score;
+        document.getElementById("popup-high-score").textContent = highScore;
+    }
 }
 
 function animate() {
     requestAnimationFrame(animate);
 
     runner.position.z -= speed;
+    if (speed < 0.8) {
+        speed += 0.0005;
+        horizontalSpeed += 0.00005;
+    }
     
     if (moveLeft && canMove) runner.position.x -= horizontalSpeed;
     if (moveRight && canMove) runner.position.x += horizontalSpeed;
@@ -319,3 +357,5 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+window.onload = startGame;

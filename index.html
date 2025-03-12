@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<title>Assignment3</title>
+		<title>Robot Run</title>
 		<style>
 			body { margin: 0; }
 			.popup {
@@ -30,12 +30,40 @@
 				cursor: pointer;
 			}
 
+			#gameScore {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+			}
+
+			#highScore {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+			}
+
 		</style>
 	</head>
 	<body>
+		<div id="gameScore">Score: <span id="game-score">0</span></div>
+		<div id="highScore">High Score: <span id="high-score">0</span></div>
 		<div id="game-over-popup" class="popup">
 			<div class="popup-content">
 				<h2>You Died</h2>
+				<h3>Score: <span id="popup-game-score">0</span></h3>
+				<h4>High Score: <span id="popup-high-score">0</span></h4>
 				<button id="restart-button">Restart</button>
 			</div>
 		</div>
