@@ -140,10 +140,20 @@ function createGroundObstacle() {
     const obstacleGeometry = new THREE.BoxGeometry(2, 1.5, 2);
     const obstacleMaterial = new THREE.MeshStandardMaterial({ map: containerTexture });
     const obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
+
+    let validPosition = false;
+    let randomX, randomZ;
     
-    const randomX = (Math.random() - 0.5) * (groundWidth - 2);
-    const randomZ = Math.random() * numSegments * segmentLength + 20;
-    
+    // dont overlap obstacles
+    while (!validPosition) {
+        randomX = (Math.random() - 0.5) * (groundWidth - 2);
+        randomZ = Math.random() * numSegments * segmentLength + 20;
+        
+        validPosition = obstacles.every(existingObstacle => {
+            return existingObstacle.position.distanceTo(new THREE.Vector3(randomX, 0.75, -randomZ)) > 2.5;
+        });
+    }
+
     obstacle.position.set(randomX, 0.75, -randomZ);
     scene.add(obstacle);
     obstacles.push(obstacle);
@@ -154,27 +164,36 @@ function createSkyObstacle() {
     const skyMaterial = new THREE.MeshStandardMaterial({
         emissive: 0xffffaa,
         emissiveIntensity: 0.1, 
-        color: 0xffff00,  // yellow for visibility
-        transparent: true, // glass-like transparency
+        color: 0xffff00,
+        transparent: true,
         opacity: 0.8,
     });
+
     const skyObstacle = new THREE.Mesh(skyGeometry, skyMaterial);
+    let validPosition = false;
+    let randomX, randomZ;
     
-    const randomX = (Math.random() - 0.5) * (groundWidth - 2.5);
-    const randomY = 3.15; 
-    const randomZ = Math.random() * numSegments * segmentLength + 20;
-    
-    skyObstacle.position.set(randomX, randomY, -randomZ);
+    // dont overlap obstacles
+    while (!validPosition) {
+        randomX = (Math.random() - 0.5) * (groundWidth - 2.5);
+        randomZ = Math.random() * numSegments * segmentLength + 20;
+        
+        validPosition = skyObstacles.every(existingObstacleTuple => {
+            let [existingObstacle, _] = existingObstacleTuple;
+            return existingObstacle.position.distanceTo(new THREE.Vector3(randomX, 3.15, -randomZ)) > 2.5;
+        });
+    }
+
+    skyObstacle.position.set(randomX, 3.15, -randomZ);
 
     // add lamp light
     const light = new THREE.PointLight(0xffcc88, 10, 0);
-    light.position.set(randomX, randomY, -randomZ);
+    light.position.set(randomX, 3.15, -randomZ);
     light.castShadow = true;
 
     scene.add(light);
     scene.add(skyObstacle);
     skyObstacles.push([skyObstacle, light]);
-
 }
 
 function createAllObstacles() {
@@ -215,7 +234,7 @@ window.addEventListener('keyup', (event) => {
 function checkCollision() {
     obstacles.forEach(obstacle => {
         const distance = runner.position.distanceTo(obstacle.position);
-        if (distance < 2) { 
+        if (distance < 1.8) { 
             handleCollision();
         }
     });
@@ -226,7 +245,7 @@ function checkCollision() {
         if ((distance < 2.1) && runner.position.y >= 1.15) { 
             handleCollision();
         }
-    });
+    }); // note: right now, if you're jumping next to a sky obstacle it'll tag as a collision cuz the guy is skinny, but collision detection at distance 2.1 is needed so you cant walk under them
 }
 
 function handleCollision() {
