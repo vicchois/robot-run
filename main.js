@@ -152,9 +152,10 @@ function shieldEffect() {
 
 function createRobotRunner() {
     // body
-    const bodyGeometry = new THREE.BoxGeometry(1, 2, 0.5); 
+    const bodyGeometry = new THREE.BoxGeometry(1, 1.5, 0.5); 
     const bodyMaterial = new THREE.MeshStandardMaterial({ map: robotTexture }); 
     const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+    body.position.set(0, 0.25, 0);
     body.name = "body";
     
     // head
@@ -186,8 +187,8 @@ function createRobotRunner() {
     // legs
     const leftLegPivot = new THREE.Group();
     const rightLegPivot = new THREE.Group();
-    leftLegPivot.position.set(-0.3, -0.75, 0);
-    rightLegPivot.position.set(0.3, -0.75, 0);
+    leftLegPivot.position.set(-0.3, -0.5, -0.25);
+    rightLegPivot.position.set(0.3, -0.5, 0);
     leftLegPivot.name = "leftLegPivot";
     rightLegPivot.name = "rightLegPivot";
     const legGeometry = new THREE.CylinderGeometry(0.2, 0.2, 1);
