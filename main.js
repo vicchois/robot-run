@@ -427,6 +427,10 @@ function resetObstacles() {
         scene.remove(skyObstacle);
         scene.remove(light);
     });
+    // Remove all power-ups
+     powerUps.forEach(powerUp => {
+        scene.remove(powerUp.mesh);
+    });
 
     //clear
     obstacles.length = 0;
@@ -464,6 +468,9 @@ function stopGame() {
     }
 }
 
+let powerUpSpawnTimer = 0;
+let powerUpSpawnInterval = 100;
+
 function animate() {
     requestAnimationFrame(animate);
 
@@ -493,12 +500,19 @@ function animate() {
     mixer.update(delta);
 
     //power ups
-    powerUps.forEach((powerUp, index) => {
-        powerUp.update();
-        if (powerUp.checkCollision()) {
-            powerUps.splice(index, 1); // Remove collected power-up
+    // Power-up spawning logic
+    powerUpSpawnTimer++;
+    if (powerUpSpawnTimer >= powerUpSpawnInterval) {
+        createPowerUp();
+        powerUpSpawnTimer = 0;
+    }
+
+    for (let i = powerUps.length - 1; i >= 0; i--) {
+        powerUps[i].update();
+        if (powerUps[i].checkCollision()) {
+            powerUps.splice(i, 1); // Remove collected power-up
         }
-    });
+    }
 
     // ground
     groundSegments.forEach(segment => {
