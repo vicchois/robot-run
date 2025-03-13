@@ -37,6 +37,8 @@ const textureLoader = new THREE.TextureLoader();
 const robotTexture = textureLoader.load('textures/metal.jpg')
 const containerTexture = textureLoader.load('textures/containerside.png')
 
+let jumpStrength = 0.25;
+
 function createGround() {
     for (let i = 0; i < numSegments; i++) {
         const groundGeometry = new THREE.PlaneGeometry(groundWidth, segmentLength);
@@ -72,24 +74,103 @@ function createWalls() {
 
 createWalls()
 
+const powerUps = [];
+const numPowerUps = 10;
+const powerUpHeight = 1.5; // Floating height
+
+class PowerUp {
+    constructor(type, color, effectFunction) {
+        this.type = type;
+        this.geometry = new THREE.SphereGeometry(0.3, 16, 16);
+        this.material = new THREE.MeshStandardMaterial({
+            emissive: color,
+            emissiveIntensity: 0.8,
+            color: color,
+            transparent: true,
+            opacity: 0.8,
+        });
+        this.mesh = new THREE.Mesh(this.geometry, this.material);
+        this.mesh.position.set(
+            (Math.random() - 0.5) * (groundWidth - 2), 
+            powerUpHeight, 
+            -Math.random() * numSegments * segmentLength - 20
+        );
+        scene.add(this.mesh);
+        this.effectFunction = effectFunction; // Function to apply the effect
+    }
+
+    update() {
+        this.mesh.rotation.y += 0.05; // Rotate effect
+        this.mesh.position.y = powerUpHeight + Math.sin(Date.now() * 0.002) * 0.2; // Floating effect
+
+        if (this.mesh.position.z > runner.position.z + 10) {
+            this.mesh.position.z -= numSegments * segmentLength;
+            this.mesh.position.x = (Math.random() - 0.5) * (groundWidth - 2);
+        }
+    }
+
+    checkCollision() {
+        const distance = runner.position.distanceTo(this.mesh.position);
+        if (distance < 1.2) {
+            this.effectFunction(); // Apply power-up effect
+            scene.remove(this.mesh);
+            return true; // Mark for removal
+        }
+        return false;
+    }
+}
+
+function createPowerUp() {
+    const powerUpTypes = [
+        { type: "Speed Boost", color: 0x00ff00, effect: speedBoost },
+        { type: "Jump Boost", color: 0x0000ff, effect: jumpBoost },
+        { type: "Shield", color: 0xffaa00, effect: shieldEffect },
+    ];
+
+    if (Math.random() > 0.2) return; // 20% chance to spawn
+
+    const chosenPowerUp = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
+    const newPowerUp = new PowerUp(chosenPowerUp.type, chosenPowerUp.color, chosenPowerUp.effect);
+    powerUps.push(newPowerUp);
+}
+
+function speedBoost() {
+    speed += 0.2;
+    setTimeout(() => { speed -= 0.2; }, 5000);
+}
+
+function jumpBoost() {
+    jumpStrength += 0.1;
+    setTimeout(() => { jumpStrength -= 0.1; }, 5000);
+}
+
+function shieldEffect() {
+    canMove = false; // Prevent damage for a short duration
+    setTimeout(() => { canMove = true; }, 5000);
+}
+
 
 function createRobotRunner() {
     // body
     const bodyGeometry = new THREE.BoxGeometry(1, 2, 0.5); 
     const bodyMaterial = new THREE.MeshStandardMaterial({ map: robotTexture }); 
     const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+    body.name = "body";
     
     // head
     const headGeometry = new THREE.SphereGeometry(0.5, 32, 32);
     const headMaterial = new THREE.MeshStandardMaterial({ map: robotTexture }); 
     const head = new THREE.Mesh(headGeometry, headMaterial);
     head.position.set(0, 1.5, 0); 
+    head.name = "head";
 
     // arms
     const armGeometry = new THREE.CylinderGeometry(0.15, 0.15, 1); 
     const armMaterial = new THREE.MeshStandardMaterial({ map: robotTexture });
     const leftArm = new THREE.Mesh(armGeometry, armMaterial);
     const rightArm = new THREE.Mesh(armGeometry, armMaterial);
+    leftArm.name = "leftArm";
+    rightArm.name = "rightArm";
     
     leftArm.position.set(-0.6, 0.5, 0); 
     rightArm.position.set(0.6, 0.5, 0); 
@@ -99,7 +180,8 @@ function createRobotRunner() {
     const legMaterial = new THREE.MeshStandardMaterial({ map: robotTexture });
     const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
     const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
-    
+    leftLeg.name = "leftLeg";
+    rightLeg.name = "rightLeg";
     leftLeg.position.set(-0.3, -0.75, 0); 
     rightLeg.position.set(0.3, -0.75, 0); 
     
@@ -128,7 +210,7 @@ let horizontalSpeed = 0.15;
 let isJumping = false;
 let velocityY = 0;
 const gravity = 0.01;
-const jumpStrength = 0.25;
+
 
 // obstacles
 const obstacles = [];
@@ -150,7 +232,7 @@ function createGroundObstacle() {
         randomZ = Math.random() * numSegments * segmentLength + 20;
         
         validPosition = obstacles.every(existingObstacle => {
-            return existingObstacle.position.distanceTo(new THREE.Vector3(randomX, 0.75, -randomZ)) > 2.5;
+            return existingObstacle.position.distanceTo(new THREE.Vector3(randomX, 0.75, -randomZ)) > 4.5;
         });
     }
 
@@ -180,7 +262,7 @@ function createSkyObstacle() {
         
         validPosition = skyObstacles.every(existingObstacleTuple => {
             let [existingObstacle, _] = existingObstacleTuple;
-            return existingObstacle.position.distanceTo(new THREE.Vector3(randomX, 3.15, -randomZ)) > 2.5;
+            return existingObstacle.position.distanceTo(new THREE.Vector3(randomX, 3.15, -randomZ)) > 4.5;
         });
     }
 
@@ -201,9 +283,54 @@ function createAllObstacles() {
         createGroundObstacle();
         createSkyObstacle();
     }
+    for (let i = 0; i < numPowerUps; i++) {
+        createPowerUp();
+    }
 }
 
 createAllObstacles()
+
+const mixer = new THREE.AnimationMixer(runner);
+const clock = new THREE.Clock();
+
+const leftArm = runner.getObjectByName("leftArm");
+const rightArm = runner.getObjectByName("rightArm");
+const leftLeg = runner.getObjectByName("leftLeg");
+const rightLeg = runner.getObjectByName("rightLeg");
+
+const leftArmTrack = new THREE.KeyframeTrack(
+    `${leftArm.uuid}.rotation[x]`,
+    [0, 0.5, 1],
+    [0, Math.PI/4, 0]
+);
+
+const rightArmTrack = new THREE.KeyframeTrack(
+    `${rightArm.uuid}.rotation[x]`,
+    [0, 0.5, 1],
+    [0, -Math.PI/4, 0]
+);
+
+const leftLegTrack = new THREE.KeyframeTrack(
+    `${leftLeg.uuid}.rotation[x]`,
+    [0, 0.5, 1],
+    [0, Math.PI/4, 0]
+);
+
+const rightLegTrack = new THREE.KeyframeTrack(
+    `${rightLeg.uuid}.rotation[x]`,
+    [0, 0.5, 1],
+    [0, -Math.PI/4, 0]
+);
+
+// Create the animation clip
+const runningAnimation = new THREE.AnimationClip('running', 1, [
+    leftArmTrack, rightArmTrack, leftLegTrack, rightLegTrack
+]);
+
+// Add the animation to the mixer and get the action
+const runAction = mixer.clipAction(runningAnimation);
+runAction.play();
+
 
 
 window.addEventListener('keydown', (event) => {
@@ -344,6 +471,17 @@ function animate() {
             velocityY = 0;
         }
     }
+
+    const delta = clock.getDelta();
+    mixer.update(delta);
+
+    //power ups
+    powerUps.forEach((powerUp, index) => {
+        powerUp.update();
+        if (powerUp.checkCollision()) {
+            powerUps.splice(index, 1); // Remove collected power-up
+        }
+    });
 
     // ground
     groundSegments.forEach(segment => {
