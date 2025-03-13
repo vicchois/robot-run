@@ -165,34 +165,50 @@ function createRobotRunner() {
     head.name = "head";
 
     // arms
+    const leftArmPivot = new THREE.Group();
+    const rightArmPivot = new THREE.Group();
+    leftArmPivot.position.set(-0.6, 0.5, 0);
+    rightArmPivot.position.set(0.6, 0.5, 0);
+    leftArmPivot.name = "leftArmPivot";
+    rightArmPivot.name = "rightArmPivot";
+
     const armGeometry = new THREE.CylinderGeometry(0.15, 0.15, 1); 
     const armMaterial = new THREE.MeshStandardMaterial({ map: robotTexture });
     const leftArm = new THREE.Mesh(armGeometry, armMaterial);
     const rightArm = new THREE.Mesh(armGeometry, armMaterial);
+    leftArm.position.set(0, 0, 0); 
+    rightArm.position.set(0, 0, 0); 
     leftArm.name = "leftArm";
     rightArm.name = "rightArm";
-    
-    leftArm.position.set(-0.6, 0.5, 0); 
-    rightArm.position.set(0.6, 0.5, 0); 
+    leftArmPivot.add(leftArm);
+    rightArmPivot.add(rightArm);
     
     // legs
+    const leftLegPivot = new THREE.Group();
+    const rightLegPivot = new THREE.Group();
+    leftLegPivot.position.set(-0.3, -0.75, 0);
+    rightLegPivot.position.set(0.3, -0.75, 0);
+    leftLegPivot.name = "leftLegPivot";
+    rightLegPivot.name = "rightLegPivot";
     const legGeometry = new THREE.CylinderGeometry(0.2, 0.2, 1);
     const legMaterial = new THREE.MeshStandardMaterial({ map: robotTexture });
     const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
     const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
+    leftLeg.position.set(0, 0, 0); 
+    rightLeg.position.set(0, 0, 0); 
     leftLeg.name = "leftLeg";
     rightLeg.name = "rightLeg";
-    leftLeg.position.set(-0.3, -0.75, 0); 
-    rightLeg.position.set(0.3, -0.75, 0); 
+    leftLegPivot.add(leftLeg);
+    rightLegPivot.add(rightLeg);
     
     // group robot
     const robot = new THREE.Group();
     robot.add(body);
     robot.add(head);
-    robot.add(leftArm);
-    robot.add(rightArm);
-    robot.add(leftLeg);
-    robot.add(rightLeg);
+    robot.add(leftArmPivot);
+    robot.add(rightArmPivot);
+    robot.add(leftLegPivot);
+    robot.add(rightLegPivot);
     
     return robot;
 }
@@ -301,25 +317,25 @@ const rightLeg = runner.getObjectByName("rightLeg");
 const leftArmTrack = new THREE.KeyframeTrack(
     `${leftArm.uuid}.rotation[x]`,
     [0, 0.5, 1],
-    [0, Math.PI/4, 0]
+    [0, -Math.PI/2, 0]
 );
 
 const rightArmTrack = new THREE.KeyframeTrack(
     `${rightArm.uuid}.rotation[x]`,
     [0, 0.5, 1],
-    [0, -Math.PI/4, 0]
+    [0, Math.PI/2, 0]
 );
 
 const leftLegTrack = new THREE.KeyframeTrack(
     `${leftLeg.uuid}.rotation[x]`,
     [0, 0.5, 1],
-    [0, Math.PI/4, 0]
+    [0, Math.PI/2, 0]
 );
 
 const rightLegTrack = new THREE.KeyframeTrack(
     `${rightLeg.uuid}.rotation[x]`,
     [0, 0.5, 1],
-    [0, -Math.PI/4, 0]
+    [0, -Math.PI/2, 0]
 );
 
 // Create the animation clip
@@ -525,7 +541,7 @@ function animate() {
         }
     });
 
-    checkCollision(); 
+    // checkCollision(); 
 
     renderer.render(scene, camera);
 }
