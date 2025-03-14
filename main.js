@@ -34,6 +34,7 @@ const robotTexture = textureLoader.load('textures/metal.jpg')
 const containerTexture = textureLoader.load('textures/containerside.png')
 
 let jumpStrength = 0.25;
+let gameStarted = false;
 
 function createGround() {
     for (let i = 0; i < numSegments; i++) {
@@ -92,46 +93,48 @@ class PowerUp {
             this.geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
             this.material = new THREE.MeshStandardMaterial({ color, metalness: 0.7, roughness: 0.3 });
         } else if (type == "Jump Boost") {
-            const shape = new THREE.Shape();
-            shape.moveTo(0, 1.25);
-            shape.lineTo(0.5, 1.25);
-            shape.lineTo(0.5, 0.5);
-            shape.quadraticCurveTo(2.5, -0.5, 0.5, -1);
-            shape.lineTo(-0.5, -1);
-            shape.lineTo(-0.5, 1.25);
-            shape.lineTo(0, 1.25);
-            const extrudeSettings = { depth: 0.15, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.03 };
-            this.geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-            this.material = new THREE.MeshStandardMaterial({ color, metalness: 0.7, roughness: 0.3 });
-            // this.geometry = new THREE.BoxGeometry(0.7, 1.2, 0.6); 
-            // this.material = new THREE.MeshStandardMaterial({ color, metalness: 0.3, roughness: 0.8 });
+            // const shape = new THREE.Shape();
+            // shape.moveTo(0, 1.25);
+            // shape.lineTo(0.5, 1.25);
+            // shape.lineTo(0.5, 0.5);
+            // shape.quadraticCurveTo(2.5, -0.5, 0.5, -1);
+            // shape.lineTo(-0.5, -1);
+            // shape.lineTo(-0.5, 1.25);
+            // shape.lineTo(0, 1.25);
+            // const extrudeSettings = { depth: 0.15, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.03 };
+            // this.geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            // this.material = new THREE.MeshStandardMaterial({ color, metalness: 0.7, roughness: 0.3 });
+            this.geometry = new THREE.BoxGeometry(0.7, 1.2, 0.6); 
+            this.material = new THREE.MeshStandardMaterial({ color, metalness: 0.3, roughness: 0.8 });
 
-            // this.mesh = new THREE.Group();
+            this.mesh = new THREE.Group();
 
-            // const bootMesh = new THREE.Mesh(this.geometry, this.material);
-            // this.mesh.add(bootMesh);
+            const bootMesh = new THREE.Mesh(this.geometry, this.material);
+            this.mesh.add(bootMesh);
 
-            // const toeGeometry = new THREE.BoxGeometry(0.6, 0.4, 0.7);
-            // const toeMesh = new THREE.Mesh(toeGeometry, this.material);
-            // toeMesh.position.set(0, -0.4, 0.4);
-            // this.mesh.add(toeMesh);
+            const toeGeometry = new THREE.BoxGeometry(0.6, 0.4, 0.7);
+            const toeMesh = new THREE.Mesh(toeGeometry, this.material);
+            toeMesh.position.set(0, -0.4, 0.4);
+            this.mesh.add(toeMesh);
 
-            // this.mesh.rotation.x = -0.1;
-        } else if (type === "Speed Boost") {
-            const shape = new THREE.Shape();
-            shape.moveTo(0, 1);
-            shape.lineTo(0.6, 1);
-            shape.lineTo(0.6, 0.2);
-            shape.lineTo(1.2, 0.2);
-            shape.lineTo(0, -1.25); 
-            shape.lineTo(-1.2, 0.2);
-            shape.lineTo(-0.6, 0.2);
-            shape.lineTo(-0.6, 1);
-            shape.lineTo(0, 1); 
-            const extrudeSettings = { depth: 0.15, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.03 };
-            this.geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-            this.material = new THREE.MeshStandardMaterial({ color, metalness: 0.7, roughness: 0.3 });
-        } else {
+            this.mesh.rotation.x = -0.1;
+        } 
+        // else if (type === "Speed Boost") {
+        //     const shape = new THREE.Shape();
+        //     shape.moveTo(0, 1);
+        //     shape.lineTo(0.6, 1);
+        //     shape.lineTo(0.6, 0.2);
+        //     shape.lineTo(1.2, 0.2);
+        //     shape.lineTo(0, -1.25); 
+        //     shape.lineTo(-1.2, 0.2);
+        //     shape.lineTo(-0.6, 0.2);
+        //     shape.lineTo(-0.6, 1);
+        //     shape.lineTo(0, 1); 
+        //     const extrudeSettings = { depth: 0.15, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.03 };
+        //     this.geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        //     this.material = new THREE.MeshStandardMaterial({ color, metalness: 0.7, roughness: 0.3 });
+        // } 
+        else {
             this.geometry = new THREE.SphereGeometry(0.3, 16, 16);
             this.material = new THREE.MeshStandardMaterial({
                 emissive: color,
@@ -493,8 +496,17 @@ const runningAnimation = new THREE.AnimationClip('running', 1, [
 // Add the animation to the mixer and get the action
 const runAction = mixer.clipAction(runningAnimation);
 runAction.play();
-
 let isPaused = false;
+
+document.getElementById('start-game-btn').addEventListener('click', () => {
+    document.getElementById('initial-screen').style.display = 'none';
+
+    document.getElementById('gameScore').style.display = 'block';
+    document.getElementById('highScore').style.display = 'block';
+    document.getElementById('active-powerups').style.display = 'block';
+    gameStarted = true;
+    startGame();
+});
 
 window.addEventListener('keydown', (event) => {
     if (event.key === 'a' || event.key === 'A') moveLeft = true;
@@ -514,7 +526,6 @@ window.addEventListener('keydown', (event) => {
         isPaused = !isPaused;
         if (isPaused) {
             pauseOverlay.style.display = 'flex'; 
-
         } else {
             pauseOverlay.style.display = 'none'; 
         }
@@ -610,8 +621,8 @@ let intervalId = null;
 
 
 function updateScore() {
-    if (!isPaused) {
-    score++;
+    if (!isPaused){
+        score++;
     }
     document.getElementById("game-score").textContent = score;
 }
@@ -641,8 +652,9 @@ scene.add(runnerHelper); // DELETE LATER (used for bounding box frame)
 function animate() {
     requestAnimationFrame(animate);
 
-    if (isPaused) { return; }
-
+    if (!gameStarted || isPaused) {
+        return;
+    }
     runner.position.z -= speed;
     if (speed < 0.5) {
         speed += 0.0002;
@@ -741,10 +753,8 @@ function animate() {
     runnerHelper.box.copy(runnerBoundingBox); // DELETE LATER (used for bounding box frame)
 
     if (!shielded) {
-        // checkCollision();
+        checkCollision();
     }
-
-
 
     renderer.render(scene, camera);
 }
@@ -756,4 +766,4 @@ window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-window.onload = startGame;
+// window.onload = startGame;
