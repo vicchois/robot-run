@@ -19,10 +19,6 @@ controls.maxPolarAngle = Math.PI / 2;
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
 scene.add(ambientLight);
 
-// const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-// directionalLight.position.set(5, 10, 5);
-// scene.add(directionalLight);
-
 const groundSegments = [];
 const leftWallSegments = [];
 const rightWallSegments = [];
@@ -135,20 +131,26 @@ function createPowerUp() {
 }
 
 function speedBoost() {
-    speed += 0.2;
-    setTimeout(() => { speed -= 0.2; }, 5000);
+    speed *= 0.8;
 }
 
 function jumpBoost() {
     jumpStrength += 0.1;
-    setTimeout(() => { jumpStrength -= 0.1; }, 5000);
+    setTimeout(() => { jumpStrength -= 0.1; }, 3000);
 }
 
 function shieldEffect() {
     canMove = false; // Prevent damage for a short duration
-    setTimeout(() => { canMove = true; }, 5000);
+    shielded = true;
+    setTimeout(() => { shieldOff(); }, 3000);
 }
 
+function shieldOff() {
+    canMove = true;
+    shielded = false;
+}
+
+const runnerBoundingBox = new THREE.Box3();
 
 function createRobotRunner() {
     // body
@@ -216,11 +218,23 @@ function createRobotRunner() {
 const runner = createRobotRunner();
 runner.position.set(0, 1.15, 0);
 scene.add(runner);
+runnerBoundingBox.setFromObject(runner);
+runnerBoundingBox.expandByScalar(-0.1);
+
+const size = new THREE.Vector3();
+runnerBoundingBox.getSize(size);
+console.log("Width:", size.x, "Height:", size.y, "Depth:", size.z);
+
+// Get the center of the bounding box
+const center = new THREE.Vector3();
+runnerBoundingBox.getCenter(center);
+console.log("Center:", center.x, center.y, center.z);
 
 let speed = 0.2;
 let moveLeft = false;
 let moveRight = false;
 let canMove = true;
+let shielded = false;
 
 let horizontalSpeed = 0.15;
 
@@ -232,7 +246,8 @@ const gravity = 0.01;
 // obstacles
 const obstacles = [];
 const skyObstacles = [];
-const skyLights = [];
+const obstaclesBounding = [];
+const skyObstaclesBounding = [];
 const numObstacles = 15;
 
 function createGroundObstacle() {
@@ -255,7 +270,12 @@ function createGroundObstacle() {
 
     obstacle.position.set(randomX, 0.75, -randomZ);
     scene.add(obstacle);
+
+    const boundingBox = new THREE.Box3();
+    boundingBox.setFromObject(obstacle);
+
     obstacles.push(obstacle);
+    obstaclesBounding.push(boundingBox);
 }
 
 function createSkyObstacle() {
@@ -292,6 +312,21 @@ function createSkyObstacle() {
 
     scene.add(light);
     scene.add(skyObstacle);
+
+    const boundingSphere = new THREE.Sphere();
+    const boundingBox = new THREE.Box3();
+    boundingBox.setFromObject(skyObstacle);
+
+    const center = new THREE.Vector3();
+    boundingBox.getCenter(center);
+
+    const size = new THREE.Vector3();
+    boundingBox.getSize(size);
+    const radius = Math.max(size.x, size.y, size.z) / 2;
+
+    boundingSphere.set(center, radius);
+
+    skyObstaclesBounding.push(boundingSphere);
     skyObstacles.push([skyObstacle, light]);
 }
 
@@ -376,20 +411,17 @@ window.addEventListener('keyup', (event) => {
 });
 
 function checkCollision() {
-    obstacles.forEach(obstacle => {
-        const distance = runner.position.distanceTo(obstacle.position);
-        if (distance < 1.8) { 
+    obstaclesBounding.forEach(box => {
+        if (runnerBoundingBox.intersectsBox(box)) {
             handleCollision();
         }
     });
 
-    skyObstacles.forEach(skyObstacleTuple => {
-        let [skyObstacle, _] = skyObstacleTuple;
-        const distance = runner.position.distanceTo(skyObstacle.position);
-        if ((distance < 2.1) && runner.position.y >= 1.15) { 
+    skyObstaclesBounding.forEach(sphere => {
+        if (runnerBoundingBox.intersectsSphere(sphere)) { 
             handleCollision();
         }
-    }); // note: right now, if you're jumping next to a sky obstacle it'll tag as a collision cuz the guy is skinny, but collision detection at distance 2.1 is needed so you cant walk under them
+    });
 }
 
 function handleCollision() {
@@ -435,11 +467,14 @@ function resetObstacles() {
     //clear
     obstacles.length = 0;
     skyObstacles.length = 0;
+    obstaclesBounding.length = 0;
+    skyObstaclesBounding.length = 0;
 
     // Recreate obstacles from scratch
     createAllObstacles();
     createGround();
     createWalls();
+    shieldOff();
     startGame();
 }
 
@@ -471,13 +506,16 @@ function stopGame() {
 let powerUpSpawnTimer = 0;
 let powerUpSpawnInterval = 100;
 
+const runnerHelper = new THREE.Box3Helper(runnerBoundingBox, 0xff0000); // DELETE LATER (used for bounding box frame)
+scene.add(runnerHelper); // DELETE LATER (used for bounding box frame)
+
 function animate() {
     requestAnimationFrame(animate);
 
     runner.position.z -= speed;
-    if (speed < 0.8) {
-        speed += 0.0005;
-        horizontalSpeed += 0.00005;
+    if (speed < 0.5) {
+        speed += 0.0002;
+        horizontalSpeed += 0.00002;
     }
     
     if (moveLeft && canMove) runner.position.x -= horizontalSpeed;
@@ -495,6 +533,9 @@ function animate() {
             velocityY = 0;
         }
     }
+
+    runnerBoundingBox.setFromObject(runner);
+    runnerBoundingBox.expandByScalar(-0.1);
 
     const delta = clock.getDelta();
     mixer.update(delta);
@@ -536,15 +577,17 @@ function animate() {
     });
 
     // ground obstacles
-    obstacles.forEach(obstacle => {
+    obstacles.forEach((obstacle, index) => {
         if (obstacle.position.z > runner.position.z + 10) {
             obstacle.position.z -= numSegments * segmentLength;
             obstacle.position.x = (Math.random() - 0.5) * (groundWidth - 2);
         }
+
+        obstaclesBounding[index].setFromObject(obstacle);
     });
 
     // sky obstacles
-    skyObstacles.forEach(skyObstacleTuple => {
+    skyObstacles.forEach((skyObstacleTuple, index) => {
         let [skyObstacle, light] = skyObstacleTuple;
         if (skyObstacle.position.z > runner.position.z + 10) {
             skyObstacle.position.z -= numSegments * segmentLength;
@@ -554,9 +597,21 @@ function animate() {
             skyObstacle.position.y = 3.15;
             light.position.y = 2.15;
         }
+
+        const boundingBox = new THREE.Box3().setFromObject(skyObstacle);
+        const center = new THREE.Vector3();
+        boundingBox.getCenter(center);
+        const size = new THREE.Vector3();
+        boundingBox.getSize(size);
+        const radius = Math.max(size.x, size.y, size.z) / 2;
+        skyObstaclesBounding[index].set(center, radius);
     });
 
-    // checkCollision(); 
+    runnerHelper.box.copy(runnerBoundingBox); // DELETE LATER (used for bounding box frame)
+
+    if (!shielded) {
+        checkCollision();
+    }
 
     renderer.render(scene, camera);
 }
