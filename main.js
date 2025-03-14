@@ -77,14 +77,46 @@ const powerUpHeight = 1.5; // Floating height
 class PowerUp {
     constructor(type, color, effectFunction) {
         this.type = type;
-        this.geometry = new THREE.SphereGeometry(0.3, 16, 16);
-        this.material = new THREE.MeshStandardMaterial({
-            emissive: color,
-            emissiveIntensity: 0.8,
-            color: color,
-            transparent: true,
-            opacity: 0.8,
-        });
+        if (type == "Shield") {
+            const shape = new THREE.Shape();
+            shape.moveTo(0, 1);
+            shape.quadraticCurveTo(0.5, 1.5, 1, 1); 
+            shape.lineTo(1.2, 0.5);
+            shape.lineTo(0.6, -1);
+            shape.lineTo(-0.6, -1);
+            shape.lineTo(-1.2, 0.5);
+            shape.lineTo(-1, 1);
+            shape.quadraticCurveTo(-0.5, 1.5, 0, 1); 
+            
+            const extrudeSettings = { depth: 0.15, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.03 };
+            this.geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            this.material = new THREE.MeshStandardMaterial({ color, metalness: 0.7, roughness: 0.3 });
+        } else if (type == "Jump Boost") {
+            // Create boot shape using BoxGeometry
+            this.geometry = new THREE.BoxGeometry(0.7, 1.2, 0.6); 
+            this.material = new THREE.MeshStandardMaterial({ color, metalness: 0.3, roughness: 0.8 });
+
+            this.mesh = new THREE.Group();
+
+            const bootMesh = new THREE.Mesh(this.geometry, this.material);
+            this.mesh.add(bootMesh);
+
+            const toeGeometry = new THREE.BoxGeometry(0.6, 0.4, 0.7);
+            const toeMesh = new THREE.Mesh(toeGeometry, this.material);
+            toeMesh.position.set(0, -0.4, 0.4);
+            this.mesh.add(toeMesh);
+
+            this.mesh.rotation.x = -0.1;
+        } else {
+            this.geometry = new THREE.SphereGeometry(0.3, 16, 16);
+            this.material = new THREE.MeshStandardMaterial({
+                emissive: color,
+                emissiveIntensity: 0.8,
+                color: color,
+                transparent: true,
+                opacity: 0.8,
+            });
+        }
         this.mesh = new THREE.Mesh(this.geometry, this.material);
         this.mesh.position.set(
             (Math.random() - 0.5) * (groundWidth - 2), 
@@ -119,7 +151,7 @@ class PowerUp {
 function createPowerUp() {
     const powerUpTypes = [
         { type: "Speed Boost", color: 0x00ff00, effect: speedBoost },
-        { type: "Jump Boost", color: 0x0000ff, effect: jumpBoost },
+        { type: "Jump Boost", color: 0xff0000, effect: jumpBoost },
         { type: "Shield", color: 0xffaa00, effect: shieldEffect },
     ];
 
