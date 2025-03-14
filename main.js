@@ -609,6 +609,7 @@ function resetObstacles() {
     skyObstacles.length = 0;
     obstaclesBounding.length = 0;
     skyObstaclesBounding.length = 0;
+    powerUps.length = 0;
 
     // Recreate obstacles from scratch
     createAllObstacles();
@@ -649,8 +650,8 @@ function stopGame() {
 let powerUpSpawnTimer = 0;
 let powerUpSpawnInterval = 100;
 
-const runnerHelper = new THREE.Box3Helper(runnerBoundingBox, 0xff0000); // DELETE LATER (used for bounding box frame)
-scene.add(runnerHelper); // DELETE LATER (used for bounding box frame)
+const runnerHelper = new THREE.Box3Helper(runnerBoundingBox, 0xff0000); // HERE (used for bounding box frame)
+scene.add(runnerHelper); // HERE (used for bounding box frame)
 
 function animate() {
     requestAnimationFrame(animate);
@@ -753,7 +754,7 @@ function animate() {
         skyObstaclesBounding[index].set(center, radius);
     });
 
-    runnerHelper.box.copy(runnerBoundingBox); // DELETE LATER (used for bounding box frame)
+    runnerHelper.box.copy(runnerBoundingBox); // HERE (used for bounding box frame)
 
     if (!shielded) {
         checkCollision();
