@@ -124,12 +124,12 @@ class PowerUp {
             -Math.random() * numSegments * segmentLength - 20
         );
         scene.add(this.mesh);
-        this.effectFunction = effectFunction; // Function to apply the effect
+        this.effectFunction = effectFunction; 
     }
 
     update() {
-        this.mesh.rotation.y += 0.05; // Rotate effect
-        this.mesh.position.y = powerUpHeight + Math.sin(Date.now() * 0.002) * 0.2; // Floating effect
+        this.mesh.rotation.y += 0.05; 
+        this.mesh.position.y = powerUpHeight + Math.sin(Date.now() * 0.002) * 0.2; 
 
         if (this.mesh.position.z > runner.position.z + 10) {
             this.mesh.position.z -= numSegments * segmentLength;
@@ -162,16 +162,63 @@ function createPowerUp() {
     powerUps.push(newPowerUp);
 }
 
+const activePowerupsContainer = document.getElementById("active-powerups");
+const powerupList = document.getElementById("powerup-list");
+
+let speedDecreaseStacks = 0;
+
+function addPowerup(name, duration) {
+    const powerupId = `powerup-${name}`;
+    
+    let existingPowerup = document.getElementById(powerupId);
+    if (existingPowerup) {
+        clearInterval(existingPowerup.dataset.timer);
+        existingPowerup.remove();
+    }
+
+    const powerupElement = document.createElement("li");
+    powerupElement.id = powerupId;
+    if (name === "Speed Decrease") {
+        powerupElement.innerHTML = `${name} x${speedDecreaseStacks + 1}`;
+        speedDecreaseStacks++;
+    } else {
+        powerupElement.innerHTML = `${name} <span class="countdown">${duration}</span>s`;
+    }
+    powerupList.appendChild(powerupElement);
+
+    activePowerupsContainer.style.display = "block";
+
+    let timeLeft = duration;
+    const countdownTimer = setInterval(() => {
+        timeLeft--;
+        if (powerupElement.querySelector(".countdown") !== null){
+            powerupElement.querySelector(".countdown").textContent = timeLeft;
+        }
+    
+        if (timeLeft <= 0) {
+            clearInterval(countdownTimer);
+            powerupElement.remove();
+            if (name === "Speed Decrease") {
+                speedDecreaseStacks = 0;
+            }
+        }
+    }, 1000);
+    powerupElement.dataset.timer = countdownTimer;
+}
+
 function speedBoost() {
+    addPowerup("Speed Decrease", 4.5);
     speed *= 0.8;
 }
 
 function jumpBoost() {
+    addPowerup("Jump Boost", 3);
     jumpStrength += 0.1;
     setTimeout(() => { jumpStrength -= 0.1; }, 3000);
 }
 
 function shieldEffect() {
+    addPowerup("Shield", 3);
     canMove = false; // Prevent damage for a short duration
     shielded = true;
     setTimeout(() => { shieldOff(); }, 3000);
@@ -514,6 +561,7 @@ let score = 0;
 let highScore = 0;
 let intervalId = null;
 
+
 function updateScore() {
     score++;
     document.getElementById("game-score").textContent = score;
@@ -642,7 +690,7 @@ function animate() {
     runnerHelper.box.copy(runnerBoundingBox); // DELETE LATER (used for bounding box frame)
 
     if (!shielded) {
-        checkCollision();
+        // checkCollision();
     }
 
     renderer.render(scene, camera);
