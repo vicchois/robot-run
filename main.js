@@ -92,21 +92,45 @@ class PowerUp {
             this.geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
             this.material = new THREE.MeshStandardMaterial({ color, metalness: 0.7, roughness: 0.3 });
         } else if (type == "Jump Boost") {
-            // Create boot shape using BoxGeometry
-            this.geometry = new THREE.BoxGeometry(0.7, 1.2, 0.6); 
-            this.material = new THREE.MeshStandardMaterial({ color, metalness: 0.3, roughness: 0.8 });
+            const shape = new THREE.Shape();
+            shape.moveTo(0, 1.25);
+            shape.lineTo(0.5, 1.25);
+            shape.lineTo(0.5, 0.5);
+            shape.quadraticCurveTo(2.5, -0.5, 0.5, -1);
+            shape.lineTo(-0.5, -1);
+            shape.lineTo(-0.5, 1.25);
+            shape.lineTo(0, 1.25);
+            const extrudeSettings = { depth: 0.15, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.03 };
+            this.geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            this.material = new THREE.MeshStandardMaterial({ color, metalness: 0.7, roughness: 0.3 });
+            // this.geometry = new THREE.BoxGeometry(0.7, 1.2, 0.6); 
+            // this.material = new THREE.MeshStandardMaterial({ color, metalness: 0.3, roughness: 0.8 });
 
-            this.mesh = new THREE.Group();
+            // this.mesh = new THREE.Group();
 
-            const bootMesh = new THREE.Mesh(this.geometry, this.material);
-            this.mesh.add(bootMesh);
+            // const bootMesh = new THREE.Mesh(this.geometry, this.material);
+            // this.mesh.add(bootMesh);
 
-            const toeGeometry = new THREE.BoxGeometry(0.6, 0.4, 0.7);
-            const toeMesh = new THREE.Mesh(toeGeometry, this.material);
-            toeMesh.position.set(0, -0.4, 0.4);
-            this.mesh.add(toeMesh);
+            // const toeGeometry = new THREE.BoxGeometry(0.6, 0.4, 0.7);
+            // const toeMesh = new THREE.Mesh(toeGeometry, this.material);
+            // toeMesh.position.set(0, -0.4, 0.4);
+            // this.mesh.add(toeMesh);
 
-            this.mesh.rotation.x = -0.1;
+            // this.mesh.rotation.x = -0.1;
+        } else if (type === "Speed Boost") {
+            const shape = new THREE.Shape();
+            shape.moveTo(0, 1);
+            shape.lineTo(0.6, 1);
+            shape.lineTo(0.6, 0.2);
+            shape.lineTo(1.2, 0.2);
+            shape.lineTo(0, -1.25); 
+            shape.lineTo(-1.2, 0.2);
+            shape.lineTo(-0.6, 0.2);
+            shape.lineTo(-0.6, 1);
+            shape.lineTo(0, 1); 
+            const extrudeSettings = { depth: 0.15, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.03 };
+            this.geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            this.material = new THREE.MeshStandardMaterial({ color, metalness: 0.7, roughness: 0.3 });
         } else {
             this.geometry = new THREE.SphereGeometry(0.3, 16, 16);
             this.material = new THREE.MeshStandardMaterial({
@@ -166,6 +190,7 @@ const activePowerupsContainer = document.getElementById("active-powerups");
 const powerupList = document.getElementById("powerup-list");
 
 let speedDecreaseStacks = 0;
+let jumpBoostOn = false;
 
 function addPowerup(name, duration) {
     const powerupId = `powerup-${name}`;
@@ -179,10 +204,13 @@ function addPowerup(name, duration) {
     const powerupElement = document.createElement("li");
     powerupElement.id = powerupId;
     if (name === "Speed Decrease") {
-        powerupElement.innerHTML = `${name} x${speedDecreaseStacks + 1}`;
+        powerupElement.innerHTML = `${name}: x${speedDecreaseStacks + 1}`;
         speedDecreaseStacks++;
+    } else if (name === "Jump Boost") {
+        powerupElement.innerHTML = `${name}: <span class="countdown">${duration}</span>s`;
+        jumpBoostOn = true;
     } else {
-        powerupElement.innerHTML = `${name} <span class="countdown">${duration}</span>s`;
+        powerupElement.innerHTML = `${name}: <span class="countdown">${duration}</span>s`;
     }
     powerupList.appendChild(powerupElement);
 
@@ -201,6 +229,9 @@ function addPowerup(name, duration) {
             if (name === "Speed Decrease") {
                 speedDecreaseStacks = 0;
             }
+            if (name === "Jump Boost") {
+                jumpBoostOn = false;
+            }
         }
     }, 1000);
     powerupElement.dataset.timer = countdownTimer;
@@ -212,6 +243,7 @@ function speedBoost() {
 }
 
 function jumpBoost() {
+    if (jumpBoostOn) return; // Prevent multiple boosts
     addPowerup("Jump Boost", 3);
     jumpStrength += 0.1;
     setTimeout(() => { jumpStrength -= 0.1; }, 3000);
@@ -462,7 +494,7 @@ const runningAnimation = new THREE.AnimationClip('running', 1, [
 const runAction = mixer.clipAction(runningAnimation);
 runAction.play();
 
-
+let isPaused = false;
 
 window.addEventListener('keydown', (event) => {
     if (event.key === 'a' || event.key === 'A') moveLeft = true;
@@ -477,6 +509,15 @@ window.addEventListener('keydown', (event) => {
         isJumping = false;
         runner.position.y = 0.75;
         runner.scale.y = 0.5;  
+    }
+    if (event.key === 'Escape') {
+        isPaused = !isPaused;
+        if (isPaused) {
+            pauseOverlay.style.display = 'flex'; 
+
+        } else {
+            pauseOverlay.style.display = 'none'; 
+        }
     }
 });
 
@@ -509,6 +550,12 @@ function handleCollision() {
     stopGame();
     document.getElementById('game-over-popup').style.display = 'flex';
 }
+
+document.getElementById('resume-button').addEventListener('click', () => {
+    //resume game
+    isPaused = false;
+    pauseOverlay.style.display = 'none';
+});
 
 document.getElementById('restart-button').addEventListener('click', () => {
     //rest from beginning
@@ -563,7 +610,9 @@ let intervalId = null;
 
 
 function updateScore() {
+    if (!isPaused) {
     score++;
+    }
     document.getElementById("game-score").textContent = score;
 }
 
@@ -591,6 +640,8 @@ scene.add(runnerHelper); // DELETE LATER (used for bounding box frame)
 
 function animate() {
     requestAnimationFrame(animate);
+
+    if (isPaused) { return; }
 
     runner.position.z -= speed;
     if (speed < 0.5) {
@@ -692,6 +743,8 @@ function animate() {
     if (!shielded) {
         // checkCollision();
     }
+
+
 
     renderer.render(scene, camera);
 }
