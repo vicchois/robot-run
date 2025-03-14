@@ -559,6 +559,7 @@ function handleCollision() {
     speed = 0; 
     canMove = false;
     stopGame();
+    document.getElementById('active-powerups').style.display = 'none';
     document.getElementById('game-over-popup').style.display = 'flex';
 }
 
@@ -580,6 +581,8 @@ document.getElementById('restart-button').addEventListener('click', () => {
     score = 0;
     document.getElementById("game-score").textContent = score;
     document.getElementById("high-score").textContent = highScore;
+    //show powerups
+    document.getElementById('active-powerups').style.display = 'block';
     //hide popup
     document.getElementById('game-over-popup').style.display = 'none';
     //reset obstacles
